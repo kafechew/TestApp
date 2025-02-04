@@ -1,22 +1,16 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from datetime import datetime
 from .database import Base
 
-class User(Base):
-    __tablename__ = "users"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), unique=True, index=True)
-    email = Column(String(100), unique=True, index=True)
-    full_name = Column(String(100))
-    is_active = Column(Boolean, default=True)
-    posts = relationship("Post", back_populates="author")
-
-class Post(Base):
-    __tablename__ = "posts"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(100), index=True)
-    content = Column(String)
-    author_id = Column(Integer, ForeignKey("users.id"))
-    author = relationship("User", back_populates="posts")
+class Profile(Base):
+  __tablename__ = "profiles"
+  
+  id = Column(Integer, primary_key=True, index=True)
+  name = Column(String, nullable=False)
+  age = Column(Integer)
+  email = Column(String, unique=True, nullable=False)
+  marital_status = Column(String)
+  country = Column(String, nullable=False)
+  state = Column(String, nullable=False)
+  is_active = Column(Boolean, default=True)
+  created_at = Column(DateTime, default=datetime.astimezone)

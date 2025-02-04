@@ -1,36 +1,41 @@
-# main.py
-
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from . import models, schemas
-from .database import engine, get_db
 from typing import List
+from pydantic import BaseModel
+from datetime import datetime
 
-models.Base.metadata.create_all(bind=engine)
+from . import database, models
 
 app = FastAPI()
 
-# Existing user endpoints...
+app.add_middleware(
+	CORSMiddleware,
+  allow_origins=["http://localhost:3000"],
+  allow_credentials=True,
+  allow_methods=["*"],
+  allow_headers=["*"],
+)
 
-@app.post("/posts/", response_model=schemas.Post)
-def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
-    db_post = models.Post(**post.dict())
-    db.add(db_post)
-    db.commit()
-    db.refresh(db_post)
-    return db_post
-
-@app.get("/posts/author/{author_id}", response_model=List[schemas.Post])
-def get_posts_by_author(author_id: int, db: Session = Depends(get_db)):
-    posts = db.query(models.Post).filter(models.Post.author_id == author_id).all()
-    return posts
-
-@app.get("/posts/search/", response_model=List[schemas.Post])
-def search_posts_by_title(title: str, db: Session = Depends(get_db)):
-    posts = db.query(models.Post).filter(models.Post.title.ilike(f"%{title}%")).all()
-    return posts
-
-@app.get("/posts/latest/", response_model=List[schemas.Post])
-def get_latest_posts(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).order_by(models.Post.id.desc()).limit(2).all()
-    return posts
+class ProfileSchema(BaseModel):
+  id: int
+  name: str
+  age: int
+  email: str
+  marital_status: str
+  country: str
+  state: str
+  is_active: bool
+  created_at: datetime
+  
+  class Config:
+    orm_mode = True
+    
+@app.get("/profiles/", response_model=List[ProfileSchema])
+def get_profiles(
+	skip: int = 0,
+  limit: int = 100,
+  db: Session = Depends(database.get_db)
+):
+  profiles = db.query(models.Profile).offset(skip).limit(limit).all()
+  return profiles
